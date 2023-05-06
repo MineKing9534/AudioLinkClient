@@ -59,8 +59,8 @@ public class AudioLinkClient {
 		return Optional.ofNullable(defaultSource);
 	}
 
-	public Optional<AudioLinkConnection> connect() {
-		return findSource().map(source -> new AudioLinkConnection(this, source));
+	public Optional<AudioLinkConnection> connect(String clientInfo) {
+		return findSource().map(source -> new AudioLinkConnection(this, source, clientInfo));
 	}
 
 

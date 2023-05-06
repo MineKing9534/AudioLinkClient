@@ -35,7 +35,7 @@ public class AudioLinkConnection extends WebSocketClient {
 	private Runnable disconnectListener;
 	private CompletableFuture<Optional<CurrentTrackData>> currentTrack;
 
-	public AudioLinkConnection(AudioLinkClient client, AudioLinkSource source) {
+	public AudioLinkConnection(AudioLinkClient client, AudioLinkSource source, String clientInfo) {
 		super(source.getURI("ws", "gateway"));
 
 		this.source = source;
@@ -47,15 +47,15 @@ public class AudioLinkConnection extends WebSocketClient {
 			throw new RuntimeException(e);
 		}
 
-		send(AudioLinkClient.gson.toJson(new ClientConfiguration(source.password(), bufferDuration)));
+		send(AudioLinkClient.gson.toJson(new ClientConfiguration(source.password(), clientInfo)));
 		AudioLinkClient.log.info("Connected to source '{}'", source.getURI("ws", "gateway"));
+	}
+
+	public record ClientConfiguration(String password, String clientInfo) {
 	}
 
 	public AudioLinkSource getSource() {
 		return source;
-	}
-
-	public record ClientConfiguration(String password, long buffer) {
 	}
 
 	@Override
