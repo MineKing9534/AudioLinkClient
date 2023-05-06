@@ -51,6 +51,10 @@ public class AudioLinkConnection extends WebSocketClient {
 		AudioLinkClient.log.info("Connected to source '{}'", source.getURI("ws", "gateway"));
 	}
 
+	public AudioLinkSource getSource() {
+		return source;
+	}
+
 	public record ClientConfiguration(String password, long buffer) {
 	}
 
