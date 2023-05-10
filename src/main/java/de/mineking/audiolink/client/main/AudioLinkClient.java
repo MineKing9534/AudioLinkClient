@@ -38,6 +38,9 @@ public class AudioLinkClient {
 		return config;
 	}
 
+	/**
+	 * @return the configured {@link AudioLinkSource} with the lowest amount of current connections
+	 */
 	public Optional<AudioLinkSource> findSource() {
 		var sources = new LinkedHashMap<AudioLinkSource, Integer>();
 
@@ -51,6 +54,10 @@ public class AudioLinkClient {
 		return sources.entrySet().stream().min(Comparator.comparingInt(Map.Entry::getValue)).map(Map.Entry::getKey);
 	}
 
+	/**
+	 * @return a {@link AudioLinkSource} that can be used for basic queries.
+	 * @apiNote WARNING: this will always return the same source, so don't use this for actual connections! Internally this is for example used for track queries...
+	 */
 	public Optional<AudioLinkSource> getDefaultSource() {
 		if(defaultSource == null) {
 			defaultSource = findSource().orElse(null);
@@ -59,11 +66,24 @@ public class AudioLinkClient {
 		return Optional.ofNullable(defaultSource);
 	}
 
+	/**
+	 * Tries to find a {@link AudioLinkSource} and creates a new {@link AudioLinkConnection} with that source.
+	 * @param clientInfo a string identifying this connection. It will be displayed in the server logs
+	 * @return an optional holding the resulting {@link AudioLinkConnection}. This will return an empty optional if none of the configured sources is available
+	 */
 	public Optional<AudioLinkConnection> connect(String clientInfo) {
 		return findSource().map(source -> new AudioLinkConnection(this, source, clientInfo));
 	}
 
-
+	/**
+	 * Makes an http request
+	 * @param source the {@link AudioLinkSource} to make the request to
+	 * @param method the http method
+	 * @param path the http path
+	 * @param finalizer a consumer to make some custom configuration for that request
+	 * @return a {@link InputStreamReader} with the result
+	 * @throws IOException if the request fails
+	 */
 	private InputStreamReader httpRequest(AudioLinkSource source, String method, String path, Consumer<HttpURLConnection> finalizer) throws IOException {
 		var connection = (HttpURLConnection) source.getURI("http", path).toURL().openConnection();
 
@@ -77,6 +97,13 @@ public class AudioLinkClient {
 		return new InputStreamReader(connection.getInputStream());
 	}
 
+	/**
+	 * Search for tracks using the input query. This will make a request to the default source.
+	 * @param query the query string
+	 * @param result the result handler
+	 * @param error a {@link Runnable} that is executed when something unexpected happens
+	 * @see #getDefaultSource()
+	 */
 	public void searchTrack(String query, Consumer<SearchResult> result, Runnable error) {
 		getDefaultSource().ifPresentOrElse(
 				source -> {
@@ -87,6 +114,7 @@ public class AudioLinkClient {
 								SearchResult.SearchResultType.get(object.get("type").getAsString()).clazz
 						));
 					} catch(Exception e) {
+						error.run();
 						AudioLinkClient.log.error("Error searching track", e);
 					}
 				},
@@ -99,6 +127,9 @@ public class AudioLinkClient {
 
 	}
 
+	/**
+	 * Shuts down this client
+	 */
 	public void shutdown() {
 		executor.shutdownNow();
 	}
