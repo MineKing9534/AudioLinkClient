@@ -78,8 +78,6 @@ After playing a track you might want to influence the playback as you would with
 To integrate AudioLinkClient to your JDA bot, you can do something similar to what you would when using default lavaplayer. You create an implementation of AudioSendHandler and register it to the AudioManager of the guild. The AudioSendHAndler implementation could look like this:
 
 ```java
-import de.mineking.audiolink.client.processing.AudioLinkConnection;
-
 public class SendHandler implements AudioSendHandler {
 	private AudioLinkConnection connection;
 	private byte[] frame;
