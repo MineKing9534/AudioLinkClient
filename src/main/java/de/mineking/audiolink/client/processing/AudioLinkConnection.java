@@ -54,6 +54,9 @@ public class AudioLinkConnection extends WebSocketClient {
 	public record ClientConfiguration(String password, String clientInfo) {
 	}
 
+	/**
+	 * @return the {@link AudioLinkSource} that manages this connection
+	 */
 	public AudioLinkSource getSource() {
 		return source;
 	}
@@ -142,6 +145,9 @@ public class AudioLinkConnection extends WebSocketClient {
 		}
 	}
 
+	/**
+	 * Disconnect this connection
+	 */
 	public void shutdown() {
 		if(shutdown) {
 			return;
@@ -153,10 +159,19 @@ public class AudioLinkConnection extends WebSocketClient {
 		close();
 	}
 
+	/**
+	 * Sets the new disconnect listener that will be called when the connection os closed abnormally
+	 * @param listener the new listener
+	 */
 	public void setDisconnectListener(Runnable listener) {
 		this.disconnectListener = listener;
 	}
 
+	/**
+	 * Add a new listener
+	 * @param layer the {@link PlayerLayer} to add the listener to
+	 * @param listener the {@link AudioEventListener} to add
+	 */
 	public void addListener(PlayerLayer layer, AudioEventListener listener) {
 		if(layer == PlayerLayer.ALL) {
 			for(var l : PlayerLayer.values()) {
@@ -170,12 +185,21 @@ public class AudioLinkConnection extends WebSocketClient {
 		listeners.get(layer).add(listener);
 	}
 
+	/**
+	 * Removes a listener from all layers
+	 * @param listener the {@link AudioEventListener} to remove
+	 */
 	public void removeListener(AudioEventListener listener) {
 		listeners.forEach((layer, listeners) -> {
 			listeners.remove(listener);
 		});
 	}
 
+	/**
+	 * Execute a command. Useful for custom commands on the server. For default commands use the dedicated methods!
+	 * @param command the name of the command
+	 * @param args the parameter map
+	 */
 	public void socketRequest(String command, Map<String, Object> args) {
 		try {
 			send(AudioLinkClient.gson.toJson(new CommandData(command, args)));
@@ -183,10 +207,22 @@ public class AudioLinkConnection extends WebSocketClient {
 		}
 	}
 
+	/**
+	 * Execute a command without parameters. For default commands use the dedicated methods!
+	 * @param command the name of the command
+	 * @see #socketRequest(String, Map)
+	 */
 	public void socketRequest(String command) {
 		socketRequest(command, Collections.emptyMap());
 	}
 
+	/**
+	 * Execute a player command.
+	 * @param layer the targeted {@link PlayerLayer}
+	 * @param cmd the name of the command
+	 * @param params the parameter map
+	 * @see #socketRequest(String, Map)
+	 */
 	private void playerRequest(PlayerLayer layer, String cmd, Map<String, Object> params) {
 		if(layer == null) {
 			layer = PlayerLayer.PRIMARY;
@@ -202,6 +238,13 @@ public class AudioLinkConnection extends WebSocketClient {
 		socketRequest(cmd, params);
 	}
 
+	/**
+	 * Play a track with a starting point a track marker. If you set a marker you will get the {@link AudioEventListener#onTrackMarker(MarkerState, CurrentTrackData)} event when that marker is reached.
+	 * @param layer the targeted {@link PlayerLayer}
+	 * @param loader the {@link TrackLoader} for the track you want to load
+	 * @param position the starting position. Default: 0
+	 * @param marker the marker position. Default: none
+	 */
 	public void playTrack(PlayerLayer layer, TrackLoader loader, Duration position, Duration marker) {
 		var params = new HashMap<String, Object>();
 
@@ -217,26 +260,54 @@ public class AudioLinkConnection extends WebSocketClient {
 		}
 	}
 
+	/**
+	 * Play a track
+	 * @param layer the targeted {@link PlayerLayer}
+	 * @param loader the {@link TrackLoader} for the track you want to load
+	 */
 	public void playTrack(PlayerLayer layer, TrackLoader loader) {
 		playTrack(layer, loader, null, null);
 	}
 
+	/**
+	 * Stop the current playing track
+	 * @param layer the targeted {@link PlayerLayer}
+	 */
 	public void stopTrack(PlayerLayer layer) {
 		playerRequest(layer, "stop", new HashMap<>());
 	}
 
+	/**
+	 * Set the pause state of the player.
+	 * @param layer the targeted {@link PlayerLayer}
+	 * @param state the new state
+	 */
 	public void setPaused(PlayerLayer layer, boolean state) {
 		playerRequest(layer, "pause", Map.of("state", state));
 	}
 
+	/**
+	 * Set the player volume.
+	 * @param layer the targeted {@link PlayerLayer}
+	 * @param volume the new volume
+	 */
 	public void setVolume(PlayerLayer layer, int volume) {
 		playerRequest(layer, "volume", Map.of("volume", volume));
 	}
 
-	public void seek(PlayerLayer layer, long position) {
-		playerRequest(layer, "seek", Map.of("position", position));
+	/**
+	 * Seek to a specific position in the current track.
+	 * @param layer the targeted {@link PlayerLayer}
+	 * @param position the new position in the track
+	 */
+	public void seek(PlayerLayer layer, Duration position) {
+		playerRequest(layer, "seek", Map.of("position", position == null ? 0 : position.toMillis()));
 	}
 
+	/**
+	 * @return A {@link CompletableFuture} managing this request
+	 * @apiNote You can only request this once at a time. If you make multiple calls on this method before the client receives a result no new request is made and instead this will return the same future as the last calls!
+	 */
 	public CompletableFuture<Optional<CurrentTrackData>> getCurrentTrack() {
 		if(currentTrack == null) {
 			currentTrack = new CompletableFuture<>();
@@ -246,6 +317,10 @@ public class AudioLinkConnection extends WebSocketClient {
 		return currentTrack;
 	}
 
+	/**
+	 * @return A chunk of PCM audio data from the buffer. The buffer is automatically refilled by a constant network stream.
+	 * @implNote Additionally, this will compare the buffer size with the configured buffer size and send a request to the server to change the next stream packet so that the internal buffer has the correct size.
+	 */
 	public synchronized byte[] provide() {
 		if(!started) {
 			socketRequest("stream");
