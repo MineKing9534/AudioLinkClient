@@ -7,6 +7,7 @@ import de.mineking.audiolink.client.data.track.MarkerState;
 import de.mineking.audiolink.client.data.track.TrackData;
 import de.mineking.audiolink.client.main.AudioLinkClient;
 import de.mineking.audiolink.client.main.AudioLinkSource;
+import de.mineking.audiolink.client.main.response.SupportsCommandResponse;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ServerHandshake;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AudioLinkConnection extends WebSocketClient {
 	private final AudioLinkSource source;
+	private final AudioLinkClient client;
 	private final long bufferDuration;
 
 	private boolean started = false;
@@ -39,6 +41,7 @@ public class AudioLinkConnection extends WebSocketClient {
 		super(source.getURI("ws", "gateway"));
 
 		this.source = source;
+		this.client = client;
 		this.bufferDuration = client.config.buffer.toMillis() / 20;
 
 		try {
@@ -59,6 +62,15 @@ public class AudioLinkConnection extends WebSocketClient {
 	 */
 	public AudioLinkSource getSource() {
 		return source;
+	}
+
+	/**
+	 * @param command the name of the command to check
+	 * @return whether the source supports the specified command
+	 * @throws IOException if something went wrong
+	 */
+	public boolean supportsCommand(String command) throws IOException {
+		return client.httpRequest(source, "GET", "supports?command=" + command, con -> {}, SupportsCommandResponse.class).supports();
 	}
 
 	@Override
