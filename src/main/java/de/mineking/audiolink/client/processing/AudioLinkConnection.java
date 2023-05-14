@@ -78,8 +78,8 @@ public class AudioLinkConnection extends WebSocketClient {
 		var reader = new DataInputStream(new ByteArrayInputStream(input.array()));
 
 		try {
-			switch(MessageType.get(reader.readByte())) {
-				case AUDIO -> {
+			switch(reader.readByte()) {
+				case 0 -> {
 					var data = reader.readAllBytes();
 
 					if(data.length == 0) {
@@ -91,25 +91,25 @@ public class AudioLinkConnection extends WebSocketClient {
 					}
 				}
 
-				case EVENT -> {
-					var type = EventType.get(reader.readByte());
+				case 1 -> {
+					var type = reader.readByte();
 					var layer = PlayerLayer.get(reader.readByte());
 
 					switch(type) {
-						case START -> {
+						case 0 -> {
 							var track = new TrackData(reader);
 							callListener(layer, listener -> listener.onTrackStart(track));
 						}
-						case END -> {
+						case 1 -> {
 							var reason = AudioTrackEndReason.get(reader.readByte());
 							callListener(layer, listener -> listener.onTrackEnd(reason));
 						}
-						case STUCK -> callListener(layer, AudioEventListener::onTrackStuck);
-						case EXCEPTION -> {
+						case 2 -> callListener(layer, AudioEventListener::onTrackStuck);
+						case 3 -> {
 							var message = reader.readUTF();
 							callListener(layer, listener -> listener.onTrackException(message));
 						}
-						case MARKER -> {
+						case 4 -> {
 							var state = MarkerState.get(reader.readByte());
 							var track = new CurrentTrackData(reader);
 							callListener(layer, listener -> listener.onTrackMarker(state, track));
@@ -117,7 +117,7 @@ public class AudioLinkConnection extends WebSocketClient {
 					}
 				}
 
-				case TRACK_INFO -> {
+				case 2 -> {
 					if(currentTrack != null) {
 						currentTrack.complete(
 								input.capacity() == 1
