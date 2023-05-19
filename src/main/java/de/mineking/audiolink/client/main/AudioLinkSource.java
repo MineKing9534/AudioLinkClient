@@ -30,7 +30,9 @@ public class AudioLinkSource {
 	 * @return A {@link URI} object representing this source
 	 */
 	public URI getURI(String protocol, String path) {
-		return URI.create(protocol + (https ? "s" : "") + "://" + host + ":" + port + "/" + path);
+		var temp = host.split("/", 2);
+
+		return URI.create(protocol + (https ? "s" : "") + "://" + temp[0] + ":" + port + "/" + (temp.length == 2 ? temp[1] + "/" : "") + path);
 	}
 
 	/**
@@ -88,5 +90,10 @@ public class AudioLinkSource {
 		try(var reader = new InputStreamReader(httpRequest(method, path, finalizer))) {
 			return AudioLinkClient.gson.fromJson(reader, type);
 		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof AudioLinkSource other && other.name.equals(name) && other.host.equals(host) && other.port == port;
 	}
 }

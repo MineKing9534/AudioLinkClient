@@ -72,6 +72,27 @@ public class AudioLinkClient {
 	}
 
 	/**
+	 * Search for tracks using the input query.
+	 *
+	 * @param source the {@link AudioLinkSource} to use
+	 * @param query  the query string
+	 * @param result the result handler
+	 * @param error  a {@link Runnable} that is executed when something unexpected happens
+	 */
+	public void searchTrack(AudioLinkSource source, String query, Consumer<SearchResult> result, Runnable error) {
+		try(var reader = new InputStreamReader(source.httpRequest("GET", "track?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8), con -> {}))) {
+			var object = JsonParser.parseReader(reader).getAsJsonObject();
+
+			result.accept(AudioLinkClient.gson.fromJson(object,
+					SearchResult.SearchResultType.get(object.get("type").getAsString()).clazz
+			));
+		} catch(Exception e) {
+			error.run();
+			AudioLinkClient.log.error("Error searching track", e);
+		}
+	}
+
+	/**
 	 * Search for tracks using the input query. This will make a request to the default source.
 	 *
 	 * @param query  the query string
@@ -81,25 +102,13 @@ public class AudioLinkClient {
 	 */
 	public void searchTrack(String query, Consumer<SearchResult> result, Runnable error) {
 		getDefaultSource().ifPresentOrElse(
-				source -> {
-					try(var reader = new InputStreamReader(source.httpRequest("GET", "track?query=" + URLEncoder.encode(query, StandardCharsets.UTF_8), con -> {}))) {
-						var object = JsonParser.parseReader(reader).getAsJsonObject();
-
-						result.accept(AudioLinkClient.gson.fromJson(object,
-								SearchResult.SearchResultType.get(object.get("type").getAsString()).clazz
-						));
-					} catch(Exception e) {
-						error.run();
-						AudioLinkClient.log.error("Error searching track", e);
-					}
-				},
+				source -> searchTrack(source, query, result, error),
 				() -> {
 					if(error != null) {
 						error.run();
 					}
 				}
 		);
-
 	}
 
 	/**
