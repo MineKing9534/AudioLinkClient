@@ -12,6 +12,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,8 +40,12 @@ public class AudioLinkClient {
 	 */
 	public Optional<AudioLinkSource> findSource() {
 		return config.sources.stream()
-				.map(s -> Map.entry(s, s.getConnectionCount()))
-				.filter(e -> e.getValue() != null)
+				.map(s -> {
+					var count = s.getConnectionCount();
+
+					return count == null ? null : Map.entry(s, count);
+				})
+				.filter(Objects::nonNull)
 				.min(Comparator.comparingInt(Map.Entry::getValue)).map(Map.Entry::getKey);
 	}
 
