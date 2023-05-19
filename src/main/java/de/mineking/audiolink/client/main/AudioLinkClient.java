@@ -81,7 +81,7 @@ public class AudioLinkClient {
 		var connection = (HttpURLConnection) source.getURI("http", path).toURL().openConnection();
 
 		connection.setRequestMethod(method);
-		connection.setRequestProperty("Authorization", source.password());
+		connection.setRequestProperty("Authorization", source.password);
 
 		finalizer.accept(connection);
 

@@ -50,7 +50,7 @@ public class AudioLinkConnection extends WebSocketClient {
 			throw new RuntimeException(e);
 		}
 
-		send(AudioLinkClient.gson.toJson(new ClientConfiguration(source.password(), clientInfo)));
+		send(AudioLinkClient.gson.toJson(new ClientConfiguration(source.password, clientInfo)));
 		AudioLinkClient.log.info("Connected to source '{}'", source.getURI("ws", "gateway"));
 	}
 
@@ -165,7 +165,7 @@ public class AudioLinkConnection extends WebSocketClient {
 			return;
 		}
 
-		AudioLinkClient.log.info("Disconnected Client with Server '{}'", source.host() + ":" + source.port());
+		AudioLinkClient.log.info("Disconnected Client with Server '{}'", source.host + ":" + source.port);
 
 		shutdown = true;
 		close();
