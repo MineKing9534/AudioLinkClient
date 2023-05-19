@@ -2,6 +2,7 @@ package de.mineking.audiolink.client.data;
 
 /**
  * The player layer that you want to access. Most of the time you actually want to use the primary layer.
+ *
  * @see #PRIMARY
  * @see #SECONDARY
  */

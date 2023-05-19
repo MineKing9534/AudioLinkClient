@@ -1,6 +1,8 @@
 package de.mineking.audiolink.client.processing;
 
-import de.mineking.audiolink.client.data.*;
+import de.mineking.audiolink.client.data.CommandData;
+import de.mineking.audiolink.client.data.PlayerLayer;
+import de.mineking.audiolink.client.data.TrackLoader;
 import de.mineking.audiolink.client.data.track.AudioTrackEndReason;
 import de.mineking.audiolink.client.data.track.CurrentTrackData;
 import de.mineking.audiolink.client.data.track.MarkerState;
@@ -70,7 +72,7 @@ public class AudioLinkConnection extends WebSocketClient {
 	 * @throws IOException if something went wrong
 	 */
 	public boolean supportsCommand(String command) throws IOException {
-		return client.httpRequest(source, "GET", "supports?command=" + command, con -> {}, SupportsCommandResponse.class).supports();
+		return source.httpRequest("GET", "supports?command=" + command, con -> {}, SupportsCommandResponse.class).supports();
 	}
 
 	@Override
@@ -173,6 +175,7 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Sets the new disconnect listener that will be called when the connection os closed abnormally
+	 *
 	 * @param listener the new listener
 	 */
 	public void setDisconnectListener(Runnable listener) {
@@ -181,7 +184,8 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Add a new listener
-	 * @param layer the {@link PlayerLayer} to add the listener to
+	 *
+	 * @param layer    the {@link PlayerLayer} to add the listener to
 	 * @param listener the {@link AudioEventListener} to add
 	 */
 	public void addListener(PlayerLayer layer, AudioEventListener listener) {
@@ -199,18 +203,18 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Removes a listener from all layers
+	 *
 	 * @param listener the {@link AudioEventListener} to remove
 	 */
 	public void removeListener(AudioEventListener listener) {
-		listeners.forEach((layer, listeners) -> {
-			listeners.remove(listener);
-		});
+		listeners.forEach((layer, listeners) -> listeners.remove(listener));
 	}
 
 	/**
 	 * Execute a command. Useful for custom commands on the server. For default commands use the dedicated methods!
+	 *
 	 * @param command the name of the command
-	 * @param args the parameter map
+	 * @param args    the parameter map
 	 */
 	public void socketRequest(String command, Map<String, Object> args) {
 		try {
@@ -221,6 +225,7 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Execute a command without parameters. For default commands use the dedicated methods!
+	 *
 	 * @param command the name of the command
 	 * @see #socketRequest(String, Map)
 	 */
@@ -230,8 +235,9 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Execute a player command.
-	 * @param layer the targeted {@link PlayerLayer}
-	 * @param cmd the name of the command
+	 *
+	 * @param layer  the targeted {@link PlayerLayer}
+	 * @param cmd    the name of the command
 	 * @param params the parameter map
 	 * @see #socketRequest(String, Map)
 	 */
@@ -252,10 +258,11 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Play a track with a starting point a track marker. If you set a marker you will get the {@link AudioEventListener#onTrackMarker(MarkerState, CurrentTrackData)} event when that marker is reached.
-	 * @param layer the targeted {@link PlayerLayer}
-	 * @param loader the {@link TrackLoader} for the track you want to load
+	 *
+	 * @param layer    the targeted {@link PlayerLayer}
+	 * @param loader   the {@link TrackLoader} for the track you want to load
 	 * @param position the starting position. Default: 0
-	 * @param marker the marker position. Default: none
+	 * @param marker   the marker position. Default: none
 	 */
 	public void playTrack(PlayerLayer layer, TrackLoader loader, Duration position, Duration marker) {
 		var params = new HashMap<String, Object>();
@@ -274,7 +281,8 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Play a track
-	 * @param layer the targeted {@link PlayerLayer}
+	 *
+	 * @param layer  the targeted {@link PlayerLayer}
 	 * @param loader the {@link TrackLoader} for the track you want to load
 	 */
 	public void playTrack(PlayerLayer layer, TrackLoader loader) {
@@ -283,6 +291,7 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Stop the current playing track
+	 *
 	 * @param layer the targeted {@link PlayerLayer}
 	 */
 	public void stopTrack(PlayerLayer layer) {
@@ -291,6 +300,7 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Set the pause state of the player.
+	 *
 	 * @param layer the targeted {@link PlayerLayer}
 	 * @param state the new state
 	 */
@@ -300,7 +310,8 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Set the player volume.
-	 * @param layer the targeted {@link PlayerLayer}
+	 *
+	 * @param layer  the targeted {@link PlayerLayer}
 	 * @param volume the new volume
 	 */
 	public void setVolume(PlayerLayer layer, int volume) {
@@ -309,7 +320,8 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * Seek to a specific position in the current track.
-	 * @param layer the targeted {@link PlayerLayer}
+	 *
+	 * @param layer    the targeted {@link PlayerLayer}
 	 * @param position the new position in the track
 	 */
 	public void seek(PlayerLayer layer, Duration position) {
