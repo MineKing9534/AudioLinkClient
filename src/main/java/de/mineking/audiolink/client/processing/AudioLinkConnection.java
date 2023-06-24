@@ -211,7 +211,7 @@ public class AudioLinkConnection extends WebSocketClient {
 	}
 
 	/**
-	 * Execute a command. Useful for custom commands on the server. For default commands use the dedicated methods!
+	 * Execute a command. Useful for custom commands on the server. For default commands, use the dedicated methods!
 	 *
 	 * @param command the name of the command
 	 * @param args    the parameter map
@@ -224,7 +224,7 @@ public class AudioLinkConnection extends WebSocketClient {
 	}
 
 	/**
-	 * Execute a command without parameters. For default commands use the dedicated methods!
+	 * Execute a command without parameters. For default commands, use the dedicated methods!
 	 *
 	 * @param command the name of the command
 	 * @see #socketRequest(String, Map)
@@ -330,7 +330,7 @@ public class AudioLinkConnection extends WebSocketClient {
 
 	/**
 	 * @return A {@link CompletableFuture} managing this request
-	 * @apiNote You can only request this once at a time. If you make multiple calls on this method before the client receives a result no new request is made and instead this will return the same future as the last calls!
+	 * @apiNote You can only request this once at a time. If you make multiple calls on this method before the client receives a result, no new request is made, and instead this will return the same future as the last calls!
 	 */
 	public CompletableFuture<Optional<CurrentTrackData>> getCurrentTrack() {
 		if(currentTrack == null) {
@@ -351,10 +351,10 @@ public class AudioLinkConnection extends WebSocketClient {
 			started = true;
 		}
 
-		if(provideCounter++ >= 50) {
+		if(provideCounter++ >= bufferDuration / 2) {
 			var diff = this.buffer.size() - bufferDuration;
 
-			if(Math.abs(diff) >= 10) {
+			if(Math.abs(diff) >= 5) {
 				socketRequest("bufferCheck", Map.of("difference", diff));
 			}
 
